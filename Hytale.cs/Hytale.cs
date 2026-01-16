@@ -233,7 +233,7 @@ namespace WindowsGSM.Plugins
             string currentVersion = File.ReadAllText(versionPath);
             string remoteVersion = await GetRemoteBuild();
 
-            if (currentVersion == remoteVersion)
+            if (currentVersion == remoteVersion && !validate)
                 return null;
 
             File.Delete(hytaleZipPath);
@@ -243,7 +243,7 @@ namespace WindowsGSM.Plugins
             await downloaderProcess.WaitForExitAsync();
             File.WriteAllText(versionPath, remoteVersion);
 
-            return downloaderProcess;
+            return null;
         }
 
         public Process StartProcess(string exe, string param = "", bool skipConsoleOutput = false)
