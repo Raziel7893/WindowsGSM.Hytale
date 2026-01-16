@@ -11,10 +11,8 @@
    - You need to type "/auth login device" and you shoud see this same as in step 1. you need to once again authenticate server. Do this and now you got Authentication Succesfull and another WARNING "Credentials stored in memory only - they will be lost on restart!"
    - Now you need to change this to Encrypted by typing: "/auth persistence Encrypted"
    - Now you see green info Credential Storage changed to Encrypted
-- !!! Also do those steps for the downloader. Click Browse => Serverfiles => install => Open a Commandline here
-  - type ./hytale-downloader-windows-amd64.exe
-  - Execute the Same steps as for the server
-    -  "/auth login device" => login on the page ; then "/auth persistence Encrypted"
+- !!! The downloader credentials can expire sometime in the future. if your update is stuck for way longer than usual:
+  - click Browse => Serverfiles, go to the installer folder and double click the hytale-downloader-windows-amd64.exe and redo the authentification prompted
 - Change Javaparameters by clicking Edit config => Server start Param.
 - The Assets are set by Server Map (MUSST be the Path from Serverfiles onwards if you create folders)
 
