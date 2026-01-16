@@ -241,7 +241,7 @@ namespace WindowsGSM.Plugins
             return downloaderProcess;
         }
 
-        public Process StartProcessAsync(string exe, string param = "")
+        public Process StartProcessAsync(string exe, string param = "", bool skipConsoleOutput = false)
         {
             Process p = null;
             try
@@ -262,6 +262,9 @@ namespace WindowsGSM.Plugins
                     },
                     EnableRaisingEvents = true
                 };
+                p.BeginOutputReadLine();
+                p.BeginErrorReadLine();
+
                 p.Start();
 
             }
@@ -303,15 +306,15 @@ namespace WindowsGSM.Plugins
 
             string remoteVersion = "";
             // --print-version => 2026.01.15-c04fdfe10
-            Process version = StartProcessAsync(hytaleInstallerPath, $" --print-version -credentials-path {hytaleInstallerCredentials}");
+            Process version = StartProcessAsync(hytaleInstallerPath, $" --print-version -credentials-path {hytaleInstallerCredentials}", true);
             while (!version.StandardOutput.EndOfStream)
             {
                 remoteVersion = version.StandardOutput.ReadLine();
                 if (!string.IsNullOrEmpty(remoteVersion))
                     break;
             }
-
             await version.WaitForExitAsync();
+            Notice = $"got remote version of {remoteVersion}";
             return remoteVersion;
         }
 
