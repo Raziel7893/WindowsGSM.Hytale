@@ -321,6 +321,8 @@ namespace WindowsGSM.Plugins
 
             string remoteVersion = "";
             // --print-version => 2026.01.15-c04fdfe10
+            if (!File.Exists(hytaleInstallerPath))
+                return "offline";
             Process version = StartProcess(hytaleInstallerPath, $" -print-version -credentials-path {hytaleInstallerCredentials}", true);
             while (!version.StandardOutput.EndOfStream)
             {
