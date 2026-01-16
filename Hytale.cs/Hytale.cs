@@ -258,12 +258,19 @@ namespace WindowsGSM.Plugins
                         UseShellExecute = false,
                         RedirectStandardInput = true,
                         RedirectStandardOutput = true,
-                        RedirectStandardError = true
+                        RedirectStandardError = true,
                     },
                     EnableRaisingEvents = true
                 };
-                p.BeginOutputReadLine();
-                p.BeginErrorReadLine();
+
+                if (!skipConsoleOutput)
+                {
+                    var serverConsole = new ServerConsole(serverData.ServerID);
+                    p.OutputDataReceived += serverConsole.AddOutput;
+                    p.ErrorDataReceived += serverConsole.AddOutput;
+                    p.BeginOutputReadLine();
+                    p.BeginErrorReadLine();
+                }
 
                 p.Start();
 
