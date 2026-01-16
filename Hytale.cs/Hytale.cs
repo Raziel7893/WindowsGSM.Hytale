@@ -62,6 +62,7 @@ namespace WindowsGSM.Plugins
         public string HytaleZip = Path.Combine(InstallerFolder, "Hytale.zip");
         public string HytaleDownloaderZip = Path.Combine(InstallerFolder, "hytale-downloader.zip");
         public string HytaleDownloader = Path.Combine(InstallerFolder, "hytale-downloader-windows-amd64.exe");
+        public string HytaleDownloaderCredentialsPath = Path.Combine(InstallerFolder, ".hytale-downloader-credentials.json");
 
         public string HytaleVersion = Path.Combine(InstallerFolder, "hytaleVersion.txt");
         public string JreVersion = Path.Combine(InstallerFolder, "jreVersion.txt");
@@ -69,6 +70,7 @@ namespace WindowsGSM.Plugins
         // - Create a default cfg for the game server after installation
         public async void CreateServerCFG()
         {
+            File.WriteAllText(ServerPath.GetServersServerFiles(serverData.ServerID, HytaleVersion), await GetRemoteBuild());
         }
 
         // - Start server function, return its Process to WindowsGSM
@@ -164,6 +166,7 @@ namespace WindowsGSM.Plugins
             string hytaleInstallerZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderZip);
             string hytaleInstallerPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloader);
             string hytaleZip = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleZip);
+            string hytaleInstallerCredentials = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderCredentialsPath);
 
             Directory.CreateDirectory(tmpInstallPath);
             Directory.CreateDirectory(ServerPath.GetServersServerFiles(serverData.ServerID, JreRootPath));
@@ -185,7 +188,7 @@ namespace WindowsGSM.Plugins
             if (!await DownloadFileAsync(DownloaderUrl, hytaleInstallerZipPath)) return null;
             ZipFile.ExtractToDirectory(new StreamReader(hytaleInstallerZipPath).BaseStream, ServerPath.GetServersServerFiles(serverData.ServerID, tmpInstallPath));
 
-            return StartProcessAsync(hytaleInstallerPath, $" -download-path {hytaleZip}");
+            return StartProcessAsync(hytaleInstallerPath, $" -download-path {hytaleZip} -credentials-path {hytaleInstallerCredentials}");
             //the hytale.zip will not be extracted here, this will be done in CreateServerCfg as the returning of the process is needed to pass on the output of the login page
         }
 
@@ -205,6 +208,7 @@ namespace WindowsGSM.Plugins
             string hytaleInstallerZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderZip);
             string hytaleInstallerPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloader);
             string hytaleZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleZip);
+            string hytaleInstallerCredentials = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderCredentialsPath);
 
             //Check JRE update 
             //await DownloadCurrentJre();
@@ -218,7 +222,7 @@ namespace WindowsGSM.Plugins
             }
 
             //update downloader
-            Process update = StartProcessAsync(hytaleInstallerPath, $" -check-update");
+            Process update = StartProcessAsync(hytaleInstallerPath, $" -check-update -credentials-path {hytaleInstallerCredentials}");
             await update.WaitForExitAsync();
 
             string currentVersion = File.ReadAllText(versionPath);
@@ -229,7 +233,7 @@ namespace WindowsGSM.Plugins
 
             File.Delete(hytaleZipPath);
 
-            var downloaderProcess = StartProcessAsync(hytaleInstallerPath, $" -download-path {hytaleZipPath}");
+            var downloaderProcess = StartProcessAsync(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
             SendEnterPreventFreeze(downloaderProcess);
             await downloaderProcess.WaitForExitAsync();
             File.WriteAllText(versionPath, remoteVersion);
@@ -246,7 +250,7 @@ namespace WindowsGSM.Plugins
                 {
                     StartInfo =
                     {
-                        WorkingDirectory = ServerPath.GetServersServerFiles(serverData.ServerID),
+                        WorkingDirectory = ServerPath.GetServersServerFiles(serverData.ServerID, InstallerFolder),
                         FileName = exe,
                         Arguments = param,
                         WindowStyle = ProcessWindowStyle.Minimized,
@@ -295,10 +299,11 @@ namespace WindowsGSM.Plugins
         public async Task<string> GetRemoteBuild()
         {
             string hytaleInstallerPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloader);
+            string hytaleInstallerCredentials = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderCredentialsPath);
 
             string remoteVersion = "";
             // --print-version => 2026.01.15-c04fdfe10
-            Process version = StartProcessAsync(hytaleInstallerPath, $" --print-version");
+            Process version = StartProcessAsync(hytaleInstallerPath, $" --print-version -credentials-path {hytaleInstallerCredentials}");
             while (!version.StandardOutput.EndOfStream)
             {
                 remoteVersion = version.StandardOutput.ReadLine();
