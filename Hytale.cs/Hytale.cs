@@ -81,9 +81,11 @@ namespace WindowsGSM.Plugins
 
             if (File.Exists(hytaleZipPath))
             {
-                var fileReader = new StreamReader(hytaleZipPath).BaseStream;
-                ZipFile.ExtractToDirectory(fileReader, ServerPath.GetServersServerFiles(serverData.ServerID), true);
-                fileReader.Close();
+                if (File.Exists(ServerPath.GetServersServerFiles(serverData.ServerID, "Asset.zip")))
+                    File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Asset.zip"));
+                if (Directory.Exists(ServerPath.GetServersServerFiles(serverData.ServerID, "Server")))
+                    DeleteFolder(ServerPath.GetServersServerFiles(serverData.ServerID, "Server"));
+                await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
                 File.Delete(hytaleZipPath);
             }
 
@@ -186,7 +188,7 @@ namespace WindowsGSM.Plugins
 
             //Get Hytale Downlaoder
             if (!await DownloadFileAsync(DownloaderUrl, hytaleInstallerZipPath)) return null;
-            ZipFile.ExtractToDirectory(new StreamReader(hytaleInstallerZipPath).BaseStream, ServerPath.GetServersServerFiles(serverData.ServerID, tmpInstallPath));
+            await FileManagement.ExtractZip(hytaleInstallerZipPath, ServerPath.GetServersServerFiles(serverData.ServerID, tmpInstallPath));
 
             return StartProcessAsync(hytaleInstallerPath, $" -download-path {hytaleZip} -credentials-path {hytaleInstallerCredentials}");
             //the hytale.zip will not be extracted here, this will be done in CreateServerCfg as the returning of the process is needed to pass on the output of the login page
@@ -218,7 +220,10 @@ namespace WindowsGSM.Plugins
             {
                 if (File.Exists(hytaleInstallerZipPath)) File.Delete(hytaleInstallerZipPath);
                 if (!await DownloadFileAsync(DownloaderUrl, hytaleInstallerZipPath)) return null;
-                ZipFile.ExtractToDirectory(new StreamReader(hytaleInstallerZipPath).BaseStream, ServerPath.GetServersServerFiles(serverData.ServerID, tmpInstallPath));
+
+                File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Asset.zip"));
+                DeleteFolder(ServerPath.GetServersServerFiles(serverData.ServerID, "Server"));
+                await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
             }
 
             //update downloader
@@ -268,11 +273,14 @@ namespace WindowsGSM.Plugins
                     var serverConsole = new ServerConsole(serverData.ServerID);
                     p.OutputDataReceived += serverConsole.AddOutput;
                     p.ErrorDataReceived += serverConsole.AddOutput;
-                    p.BeginOutputReadLine();
-                    p.BeginErrorReadLine();
                 }
 
                 p.Start();
+                if (!skipConsoleOutput)
+                {
+                    p.BeginOutputReadLine();
+                    p.BeginErrorReadLine();
+                }
 
             }
             catch
@@ -418,7 +426,8 @@ namespace WindowsGSM.Plugins
 
                 await webClient.DownloadFileTaskAsync(new Uri(downloadUrl), jreZipPath);
 
-                ZipFile.ExtractToDirectory(new StreamReader(jreZipPath).BaseStream, jreDestPath);
+                DeleteFolder(jreDestPath);
+                await FileManagement.ExtractZip(jreZipPath, jreDestPath);
 
                 File.WriteAllText(versionPath, version);
             }
@@ -437,6 +446,11 @@ namespace WindowsGSM.Plugins
             string javaRoot = ServerPath.GetServersServerFiles(serverData.ServerID, JreRootPath);
 
             File.Delete(jreZipPath);
+            DeleteFolder(javaRoot);
+        }
+
+        private static void DeleteFolder(string javaRoot)
+        {
             System.IO.DirectoryInfo di = new DirectoryInfo(javaRoot);
             foreach (FileInfo file in di.GetFiles())
             {
