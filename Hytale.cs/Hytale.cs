@@ -64,7 +64,7 @@ namespace WindowsGSM.Plugins
         public string HytaleDownloader = Path.Combine(InstallerFolder, "hytale-downloader-windows-amd64.exe");
 
         public string HytaleVersion = Path.Combine(InstallerFolder, "hytaleVersion.txt");
-        public string JreVersion = Path.Combine(InstallerFolder, "hytaleVersion.txt");
+        public string JreVersion = Path.Combine(InstallerFolder, "jreVersion.txt");
 
         // - Create a default cfg for the game server after installation
         public async void CreateServerCFG()
