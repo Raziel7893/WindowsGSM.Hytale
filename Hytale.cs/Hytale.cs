@@ -190,7 +190,7 @@ namespace WindowsGSM.Plugins
             if (!await DownloadFileAsync(DownloaderUrl, hytaleInstallerZipPath)) return null;
             await FileManagement.ExtractZip(hytaleInstallerZipPath, ServerPath.GetServersServerFiles(serverData.ServerID, tmpInstallPath));
 
-            return StartProcessAsync(hytaleInstallerPath, $" -download-path {hytaleZip} -credentials-path {hytaleInstallerCredentials}");
+            return StartProcess(hytaleInstallerPath, $" -download-path {hytaleZip} -credentials-path {hytaleInstallerCredentials}", true);
             //the hytale.zip will not be extracted here, this will be done in CreateServerCfg as the returning of the process is needed to pass on the output of the login page
         }
 
@@ -227,7 +227,7 @@ namespace WindowsGSM.Plugins
             }
 
             //update downloader
-            Process update = StartProcessAsync(hytaleInstallerPath, $" -check-update -credentials-path {hytaleInstallerCredentials}");
+            Process update = StartProcess(hytaleInstallerPath, $" -check-update -credentials-path {hytaleInstallerCredentials}");
             await update.WaitForExitAsync();
 
             string currentVersion = File.ReadAllText(versionPath);
@@ -238,7 +238,7 @@ namespace WindowsGSM.Plugins
 
             File.Delete(hytaleZipPath);
 
-            var downloaderProcess = StartProcessAsync(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
+            var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
             SendEnterPreventFreeze(downloaderProcess);
             await downloaderProcess.WaitForExitAsync();
             File.WriteAllText(versionPath, remoteVersion);
@@ -246,7 +246,7 @@ namespace WindowsGSM.Plugins
             return downloaderProcess;
         }
 
-        public Process StartProcessAsync(string exe, string param = "", bool skipConsoleOutput = false)
+        public Process StartProcess(string exe, string param = "", bool skipConsoleOutput = false)
         {
             Process p = null;
             try
@@ -321,7 +321,7 @@ namespace WindowsGSM.Plugins
 
             string remoteVersion = "";
             // --print-version => 2026.01.15-c04fdfe10
-            Process version = StartProcessAsync(hytaleInstallerPath, $" --print-version -credentials-path {hytaleInstallerCredentials}", true);
+            Process version = StartProcess(hytaleInstallerPath, $" -print-version -credentials-path {hytaleInstallerCredentials}", true);
             while (!version.StandardOutput.EndOfStream)
             {
                 remoteVersion = version.StandardOutput.ReadLine();
