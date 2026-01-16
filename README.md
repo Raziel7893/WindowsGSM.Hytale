@@ -3,10 +3,14 @@
 
 ## PLEASE ⭐STAR⭐ THE REPO IF YOU LIKE IT! THANKS!
 
-### Notes 
+### Notes, kinda experimental
 - Both the Downloader and the game will need a manual authentification on the first start. 
   - The Downloader should print the authCode in the install-Log, authorize it with the link printed There!
-  - The Server will request it by the console, so either Click Toggle Console the first start, or have Embedd Console enabled!
+- Server auth:
+   - Start server and you need click Toggle Console and in console you shoud see WARN "No server tokens configured.
+   - You need to type /auth login device and you shoud see this same as in step 1. you need to once again authenticate server. Do this and now you got Authentication Succesfull and another WARNING "Credentials stored in memory only - they will be lost on restart!"
+   - Now you need to change this to Encrypted by typing: /auth persistence Encrypted 
+   - Now you see green info Credential Storage changed to Encrypted
 - Change Javaparameters by clicking Edit config => Server start Param.
 - The Assets are set by Server Map (MUSST be the Path from Serverfiles onwards if you create folders)
 
