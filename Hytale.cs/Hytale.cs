@@ -207,7 +207,7 @@ namespace WindowsGSM.Plugins
             string hytaleZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleZip);
 
             //Check JRE update 
-            await DownloadCurrentJre();
+            //await DownloadCurrentJre();
 
             //Get Hytale Downlaoder
             if (!File.Exists(hytaleInstallerPath))
