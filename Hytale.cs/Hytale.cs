@@ -242,6 +242,7 @@ namespace WindowsGSM.Plugins
             SendEnterPreventFreeze(downloaderProcess);
             downloaderProcess.WaitForExit(60000);
             File.WriteAllText(versionPath, remoteVersion);
+            File.Delete(hytaleZipPath);
 
             return null;
         }
