@@ -228,7 +228,7 @@ namespace WindowsGSM.Plugins
 
             //update downloader
             Process update = StartProcess(hytaleInstallerPath, $" -check-update -credentials-path {hytaleInstallerCredentials}");
-            await update.WaitForExitAsync();
+            update.WaitForExit(60000);
 
             string currentVersion = File.ReadAllText(versionPath);
             string remoteVersion = await GetRemoteBuild();
@@ -240,7 +240,7 @@ namespace WindowsGSM.Plugins
 
             var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
             SendEnterPreventFreeze(downloaderProcess);
-            await downloaderProcess.WaitForExitAsync();
+            downloaderProcess.WaitForExit(60000);
             File.WriteAllText(versionPath, remoteVersion);
 
             return null;
@@ -330,7 +330,7 @@ namespace WindowsGSM.Plugins
                 if (!string.IsNullOrEmpty(remoteVersion))
                     break;
             }
-            await version.WaitForExitAsync();
+            version.WaitForExit(60000);
             Notice = $"got remote version of {remoteVersion}";
             return remoteVersion;
         }
