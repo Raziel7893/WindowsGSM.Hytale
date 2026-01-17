@@ -240,7 +240,7 @@ namespace WindowsGSM.Plugins
 
             var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
             SendEnterPreventFreeze(downloaderProcess);
-            downloaderProcess.WaitForExit(60000);
+            downloaderProcess.WaitForExit(600000);
             File.WriteAllText(versionPath, remoteVersion);
             File.Delete(hytaleZipPath);
 
