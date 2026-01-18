@@ -3,6 +3,8 @@
 
 ## PLEASE ⭐STAR⭐ THE REPO IF YOU LIKE IT! THANKS!
 
+### If You used v1 of this plugin(so any version before the 2026.01.18: i changed the java parameter location to use Server GSLT and using Server Start Param to actually use for Hytale itself. just makes more sense this way
+
 ### Notes, kinda experimental
 - Both the Downloader and the game will need a manual authentification on the first start. 
   - The Downloader should print the authCode in the install-Log, authorize it with the link printed There!
@@ -13,7 +15,10 @@
    - Now you see green info Credential Storage changed to Encrypted
 - !!! The downloader credentials can expire sometime in the future. if your update is stuck for way longer than usual:
   - click Browse => Serverfiles, go to the installer folder and double click the hytale-downloader-windows-amd64.exe and redo the authentification prompted
-- Change Javaparameters by clicking Edit config => Server start Param.
+- Add Javaparameters by clicking Edit config => Server GSLT.
+  - like -Xmx6G -Xms6G
+- Use Server Start Param to add Parameters for Hytale
+  - like -backup %PathWhereYourBackupShouldBeStored% 
 - The Assets are set by Server Map (MUSST be the Path from Serverfiles onwards if you create folders)
 
 ### Skip Oauth
