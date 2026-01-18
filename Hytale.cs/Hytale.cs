@@ -219,7 +219,7 @@ namespace WindowsGSM.Plugins
 
                 File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Asset.zip"));
                 DeleteFolder(ServerPath.GetServersServerFiles(serverData.ServerID, "Server"));
-                await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
+                await FileManagement.ExtractZip(hytaleInstallerZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
             }
 
             //update downloader
