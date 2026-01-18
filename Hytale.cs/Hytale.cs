@@ -79,20 +79,15 @@ namespace WindowsGSM.Plugins
             string hytaleZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleZip);
             string shipExePath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, StartPath);
 
-            if (File.Exists(hytaleZipPath))
-            {
-                if (File.Exists(ServerPath.GetServersServerFiles(serverData.ServerID, "Asset.zip")))
-                    File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Asset.zip"));
-                if (Directory.Exists(ServerPath.GetServersServerFiles(serverData.ServerID, "Server")))
-                    DeleteFolder(ServerPath.GetServersServerFiles(serverData.ServerID, "Server"));
-                await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
-                File.Delete(hytaleZipPath);
-            }
-
             if (!File.Exists(shipExePath))
             {
-                Error = $"{Path.GetFileName(shipExePath)} not found ({shipExePath})";
-                return null;
+                if (File.Exists(hytaleZipPath))
+                    await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
+                else
+                {
+                    Error = $"{Path.GetFileName(shipExePath)} not found ({shipExePath}) and the hytale.zip is also not available";
+                    return null;
+                }
             }
 
             //prepare java parameters, maybe from a cfg? Lets try ServerstartParam first
@@ -242,7 +237,6 @@ namespace WindowsGSM.Plugins
             SendEnterPreventFreeze(downloaderProcess);
             downloaderProcess.WaitForExit(600000);
             File.WriteAllText(versionPath, remoteVersion);
-            File.Delete(hytaleZipPath);
 
             return null;
         }
