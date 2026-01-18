@@ -17,6 +17,7 @@
   - click Browse => Serverfiles, go to the installer folder and double click the hytale-downloader-windows-amd64.exe and redo the authentification prompted
 - Add Javaparameters by clicking Edit config => Server GSLT.
   - like -Xmx6G -Xms6G
+  - the AOT caching is already done by the plugin itself, you need to edit the .cs to remove line 96. please let me know if that should be configurable.
 - Use Server Start Param to add Parameters for Hytale
   - like -backup %PathWhereYourBackupShouldBeStored% 
 - The Assets are set by Server Map (MUSST be the Path from Serverfiles onwards if you create folders)
