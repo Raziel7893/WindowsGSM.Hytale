@@ -37,6 +37,12 @@
 ### ToDo
 - adjust to steam when released
 
+### Troubleshooting
+- If other players( or you yourself from another PC in your network) create a inbound Rule in your Windows Firewall.
+  - Unlike most other plugins, WindowsGSM can't create the necessary firewall rule for java based servers
+  - Else: make sure to forward the ServerPort with Protocoll UDP and TCP.
+  - If It still does not work: make sure you have an actually an internet contract that contains full ipv4. quite a few newer contracts only provide IPV6 adresses for hosting which does not work for hosting games. called CGNAT, IPV6-Only or DSLight sometimes  
+
 ### WindowsGSM Installation: 
 1. Download  WindowsGSM https://windowsgsm.com/ 
 2. Create a Folder at a Location you wan't all Server to be Installed and Run.
