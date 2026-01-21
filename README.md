@@ -41,7 +41,12 @@
 - If other players( or you yourself from another PC in your network) create a inbound Rule in your Windows Firewall.
   - Unlike most other plugins, WindowsGSM can't create the necessary firewall rule for java based servers
   - Else: make sure to forward the ServerPort with Protocoll UDP and TCP.
-  - If It still does not work: make sure you have an actually an internet contract that contains full ipv4. quite a few newer contracts only provide IPV6 adresses for hosting which does not work for hosting games. called CGNAT, IPV6-Only or DSLight sometimes  
+  - If It still does not work: make sure you have an actually an internet contract that contains full ipv4. quite a few newer contracts only provide IPV6 adresses for hosting which does not work for hosting games. called CGNAT, IPV6-Only or DSLight sometimes
+- the Server asks for authentification after every restart:
+  - you forgot /auth persistence Encrypted
+- Install fails unexpectly after successully downloading:
+  - you are using a Path with spaces for WindowsGSM
+    - Update to a newer version of the plugin
 
 ### WindowsGSM Installation: 
 1. Download  WindowsGSM https://windowsgsm.com/ 
