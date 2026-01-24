@@ -93,9 +93,9 @@ namespace WindowsGSM.Plugins
             //prepare java parameters, maybe from a cfg? Lets try ServerstartParam first
             var paramSb = new StringBuilder();
             paramSb.Append(serverData.ServerGSLT);
-            paramSb.Append($" -XX:AOTCache=\"{ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot")}\"");
-            paramSb.Append($" -jar \"{shipExePath}\"");
-            paramSb.Append($" --assets \"{ServerPath.GetServersServerFiles(serverData.ServerID, serverData.ServerMap)}\"");
+            paramSb.Append($" -XX:AOTCache={ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot")}");
+            paramSb.Append($" -jar {shipExePath}");
+            paramSb.Append($" --assets {ServerPath.GetServersServerFiles(serverData.ServerID, serverData.ServerMap)}");
             paramSb.Append($" --bind {serverData.ServerIP}:{serverData.ServerPort}");
             paramSb.Append($" {serverData.ServerParam}");
 
@@ -186,7 +186,7 @@ namespace WindowsGSM.Plugins
             if (!await DownloadFileAsync(DownloaderUrl, hytaleInstallerZipPath)) return null;
             await FileManagement.ExtractZip(hytaleInstallerZipPath, ServerPath.GetServersServerFiles(serverData.ServerID, tmpInstallPath));
 
-            return StartProcess(hytaleInstallerPath, $" -download-path \"{hytaleZip}\" -credentials-path \"{hytaleInstallerCredentials}\"", true);
+            return StartProcess(hytaleInstallerPath, $" -download-path {hytaleZip} -credentials-path {hytaleInstallerCredentials}", true);
             //the hytale.zip will not be extracted here, this will be done in CreateServerCfg as the returning of the process is needed to pass on the output of the login page
         }
 
@@ -223,7 +223,7 @@ namespace WindowsGSM.Plugins
             }
 
             //update downloader
-            Process update = StartProcess(hytaleInstallerPath, $" -check-update -credentials-path \"{hytaleInstallerCredentials}\"");
+            Process update = StartProcess(hytaleInstallerPath, $" -check-update -credentials-path {hytaleInstallerCredentials}");
             update.WaitForExit(60000);
 
             string currentVersion = File.ReadAllText(versionPath);
@@ -234,10 +234,15 @@ namespace WindowsGSM.Plugins
 
             File.Delete(hytaleZipPath);
 
-            var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path \"{hytaleZipPath}\" -credentials-path \"{hytaleInstallerCredentials}\"");
+            var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
             SendEnterPreventFreeze(downloaderProcess);
             downloaderProcess.WaitForExit(600000);
             File.WriteAllText(versionPath, remoteVersion);
+
+            File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Assets.zip"));
+            File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.jar"));
+            File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot"));
+            await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
 
             return null;
         }
@@ -319,7 +324,7 @@ namespace WindowsGSM.Plugins
             // --print-version => 2026.01.15-c04fdfe10
             if (!File.Exists(hytaleInstallerPath))
                 return "offline";
-            Process version = StartProcess(hytaleInstallerPath, $" -print-version -credentials-path \"{hytaleInstallerCredentials}\"", true);
+            Process version = StartProcess(hytaleInstallerPath, $" -print-version -credentials-path {hytaleInstallerCredentials}", true);
             while (!version.StandardOutput.EndOfStream)
             {
                 remoteVersion = version.StandardOutput.ReadLine();
