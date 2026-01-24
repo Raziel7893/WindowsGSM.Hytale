@@ -82,7 +82,10 @@ namespace WindowsGSM.Plugins
             if (!File.Exists(shipExePath))
             {
                 if (File.Exists(hytaleZipPath))
+                {
                     await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
+                    File.Delete(hytaleZipPath);
+                }
                 else
                 {
                     Error = $"{Path.GetFileName(shipExePath)} not found ({shipExePath}) and the hytale.zip is also not available";
@@ -205,7 +208,6 @@ namespace WindowsGSM.Plugins
             string versionPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleVersion);
             string hytaleInstallerZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderZip);
             string hytaleInstallerPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloader);
-            string hytaleZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleZip);
             string hytaleInstallerCredentials = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderCredentialsPath);
 
             //Check JRE update 
@@ -232,9 +234,10 @@ namespace WindowsGSM.Plugins
             if (currentVersion == remoteVersion && !validate)
                 return null;
 
-            File.Delete(hytaleZipPath);
+            string hytaleZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, $"{remoteVersion}.zip");
 
-            var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
+            //var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
+            var downloaderProcess = StartProcess(hytaleInstallerPath, $"-credentials-path {hytaleInstallerCredentials}"); //remove the download path as it seems to fail to download sometimes
             SendEnterPreventFreeze(downloaderProcess);
             downloaderProcess.WaitForExit(600000);
             File.WriteAllText(versionPath, remoteVersion);
@@ -243,6 +246,7 @@ namespace WindowsGSM.Plugins
             File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.jar"));
             File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot"));
             await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
+            File.Delete(hytaleZipPath);
 
             return null;
         }
