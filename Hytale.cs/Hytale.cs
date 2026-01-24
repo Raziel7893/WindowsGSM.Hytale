@@ -127,7 +127,7 @@ namespace WindowsGSM.Plugins
             //prepare java parameters, maybe from a cfg? Lets try ServerstartParam first
             var paramSb = new StringBuilder();
             paramSb.Append(serverData.ServerGSLT);
-            paramSb.Append($" -XX:AOTCache=\"{ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot")}\"");
+            // paramSb.Append($" -XX:AOTCache=\"{ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot")}\"");
             paramSb.Append($" -jar \"{shipExePath}\"");
             paramSb.Append($" --assets \"{ServerPath.GetServersServerFiles(serverData.ServerID, serverData.ServerMap)}\"");
             paramSb.Append($" --bind {serverData.ServerIP}:{serverData.ServerPort}");
