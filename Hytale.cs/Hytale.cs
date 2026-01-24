@@ -79,11 +79,45 @@ namespace WindowsGSM.Plugins
             string hytaleZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleZip);
             string shipExePath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, StartPath);
 
-            if (!File.Exists(shipExePath))
+            // Check if we need to extract the zip (either exe missing or zip is newer)
+            bool shouldExtract = !File.Exists(shipExePath);
+            if (!shouldExtract && File.Exists(hytaleZipPath))
+            {
+                var zipTime = File.GetLastWriteTime(hytaleZipPath);
+                var exeTime = File.GetLastWriteTime(shipExePath);
+                // Use a slightly larger epsilon for timestamp comparison to handle file system quirks
+                if (zipTime >= exeTime)
+                {
+                    shouldExtract = true;
+                }
+            }
+
+            if (shouldExtract)
             {
                 if (File.Exists(hytaleZipPath))
-                    await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
-                else
+                {
+                    Notice = "Performing clean extraction of Hytale.zip... This may take a moment.";
+                    
+                    string serverRoot = ServerPath.GetServersServerFiles(serverData.ServerID);
+                    string assetsFile = Path.Combine(serverRoot, "Assets.zip");
+                    string serverDir = Path.Combine(serverRoot, "Server");
+
+                    try {
+                        if (File.Exists(assetsFile)) { File.Delete(assetsFile); }
+                        if (Directory.Exists(serverDir)) { DeleteFolder(serverDir); }
+                    } catch (Exception e) {
+                        Notice = $"Warning: Could not perform clean cleanup: {e.Message}. Proceeding with merge extraction.";
+                    }
+
+                    await FileManagement.ExtractZip(hytaleZipPath, serverRoot);
+                    
+                    // Update timestamp only if extraction seemingly worked
+                    if (File.Exists(shipExePath))
+                    {
+                        File.SetLastWriteTime(shipExePath, DateTime.Now);
+                    }
+                }
+                else if (!File.Exists(shipExePath))
                 {
                     Error = $"{Path.GetFileName(shipExePath)} not found ({shipExePath}) and the hytale.zip is also not available";
                     return null;
@@ -93,9 +127,9 @@ namespace WindowsGSM.Plugins
             //prepare java parameters, maybe from a cfg? Lets try ServerstartParam first
             var paramSb = new StringBuilder();
             paramSb.Append(serverData.ServerGSLT);
-            paramSb.Append($" -XX:AOTCache={ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot")}");
-            paramSb.Append($" -jar {shipExePath}");
-            paramSb.Append($" --assets {ServerPath.GetServersServerFiles(serverData.ServerID, serverData.ServerMap)}");
+            paramSb.Append($" -XX:AOTCache=\"{ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot")}\"");
+            paramSb.Append($" -jar \"{shipExePath}\"");
+            paramSb.Append($" --assets \"{ServerPath.GetServersServerFiles(serverData.ServerID, serverData.ServerMap)}\"");
             paramSb.Append($" --bind {serverData.ServerIP}:{serverData.ServerPort}");
             paramSb.Append($" {serverData.ServerParam}");
 
@@ -186,7 +220,7 @@ namespace WindowsGSM.Plugins
             if (!await DownloadFileAsync(DownloaderUrl, hytaleInstallerZipPath)) return null;
             await FileManagement.ExtractZip(hytaleInstallerZipPath, ServerPath.GetServersServerFiles(serverData.ServerID, tmpInstallPath));
 
-            return StartProcess(hytaleInstallerPath, $" -download-path {hytaleZip} -credentials-path {hytaleInstallerCredentials}", true);
+            return StartProcess(hytaleInstallerPath, $" -download-path \"{hytaleZip}\" -skip-update-check -credentials-path \"{hytaleInstallerCredentials}\"", true);
             //the hytale.zip will not be extracted here, this will be done in CreateServerCfg as the returning of the process is needed to pass on the output of the login page
         }
 
@@ -207,44 +241,54 @@ namespace WindowsGSM.Plugins
             string hytaleInstallerPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloader);
             string hytaleZipPath = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleZip);
             string hytaleInstallerCredentials = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderCredentialsPath);
+            string shipExePath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, StartPath);
 
             //Check JRE update 
             //await DownloadCurrentJre();
 
-            //Get Hytale Downlaoder
+            //Get Hytale Downloader
             if (!File.Exists(hytaleInstallerPath))
             {
                 if (File.Exists(hytaleInstallerZipPath)) File.Delete(hytaleInstallerZipPath);
                 if (!await DownloadFileAsync(DownloaderUrl, hytaleInstallerZipPath)) return null;
 
-                File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Asset.zip"));
+                File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Assets.zip"));
                 DeleteFolder(ServerPath.GetServersServerFiles(serverData.ServerID, "Server"));
                 await FileManagement.ExtractZip(hytaleInstallerZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
             }
 
-            //update downloader
-            Process update = StartProcess(hytaleInstallerPath, $" -check-update -credentials-path {hytaleInstallerCredentials}");
-            update.WaitForExit(60000);
+            //update downloader if needed (synchronous check)
+            Process update = StartProcess(hytaleInstallerPath, $" -check-update -skip-update-check -credentials-path \"{hytaleInstallerCredentials}\"");
+            update.StandardInput.Close(); // Close input to prevent hanging
+            update.WaitForExit(30000);
 
-            string currentVersion = File.ReadAllText(versionPath);
+            string currentVersion = "none";
+            if (File.Exists(versionPath))
+            {
+                currentVersion = File.ReadAllText(versionPath);
+            }
+            
             string remoteVersion = await GetRemoteBuild();
 
-            if (currentVersion == remoteVersion && !validate)
+            // If we are already up to date, only proceed if jar is missing or user clicked Validate
+            if (currentVersion == remoteVersion && !validate && File.Exists(shipExePath))
                 return null;
 
-            File.Delete(hytaleZipPath);
+            if (File.Exists(hytaleZipPath))
+            {
+                File.Delete(hytaleZipPath);
+            }
 
-            var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path {hytaleZipPath} -credentials-path {hytaleInstallerCredentials}");
-            SendEnterPreventFreeze(downloaderProcess);
-            downloaderProcess.WaitForExit(600000);
-            File.WriteAllText(versionPath, remoteVersion);
+            var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path \"{hytaleZipPath}\" -skip-update-check -credentials-path \"{hytaleInstallerCredentials}\"");
+            downloaderProcess.StandardInput.Close(); // Close input if not authenticated/no input needed
+            
+            // Update version file only AFTER the process has finished
+            downloaderProcess.Exited += (sender, e) => {
+                File.WriteAllText(versionPath, remoteVersion);
+            };
 
-            File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Assets.zip"));
-            File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.jar"));
-            File.Delete(ServerPath.GetServersServerFiles(serverData.ServerID, "Server", "HytaleServer.aot"));
-            await FileManagement.ExtractZip(hytaleZipPath, ServerPath.GetServersServerFiles(serverData.ServerID));
-
-            return null;
+            // We return the process so WindowsGSM can show the terminal output and handle authentication if needed.
+            return downloaderProcess;
         }
 
         public Process StartProcess(string exe, string param = "", bool skipConsoleOutput = false)
@@ -286,9 +330,9 @@ namespace WindowsGSM.Plugins
             }
             catch
             {
-                Error = $"Could Not Execute ${exe}";
+                Error = $"Could Not Execute {exe}";
             }
-            SendEnterPreventFreeze(p);
+            
             return p;
         }
 
@@ -312,7 +356,8 @@ namespace WindowsGSM.Plugins
 
         public string GetLocalBuild()
         {
-            return File.ReadAllText(Functions.ServerPath.GetServersServerFiles(serverData.ServerID, HytaleVersion));
+            string versionPath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, HytaleVersion);
+            return File.Exists(versionPath) ? File.ReadAllText(versionPath) : "none";
         }
 
         public async Task<string> GetRemoteBuild()
@@ -321,17 +366,23 @@ namespace WindowsGSM.Plugins
             string hytaleInstallerCredentials = ServerPath.GetServersServerFiles(serverData.ServerID, HytaleDownloaderCredentialsPath);
 
             string remoteVersion = "";
-            // --print-version => 2026.01.15-c04fdfe10
             if (!File.Exists(hytaleInstallerPath))
                 return "offline";
-            Process version = StartProcess(hytaleInstallerPath, $" -print-version -credentials-path {hytaleInstallerCredentials}", true);
-            while (!version.StandardOutput.EndOfStream)
+
+            // Use -skip-update-check and ensure we don't deadlock
+            Process version = StartProcess(hytaleInstallerPath, $" -print-version -skip-update-check -credentials-path \"{hytaleInstallerCredentials}\"", true);
+            version.StandardInput.Close();
+
+            // Read output and error to prevent pipe saturation
+            var outputTask = version.StandardOutput.ReadLineAsync();
+            var errorTask = version.StandardError.ReadToEndAsync();
+
+            if (await Task.WhenAny(outputTask, Task.Delay(10000)) == outputTask)
             {
-                remoteVersion = version.StandardOutput.ReadLine();
-                if (!string.IsNullOrEmpty(remoteVersion))
-                    break;
+                remoteVersion = await outputTask;
             }
-            version.WaitForExit(60000);
+            
+            version.WaitForExit(5000);
             Notice = $"got remote version of {remoteVersion}";
             return remoteVersion;
         }
@@ -349,39 +400,6 @@ namespace WindowsGSM.Plugins
             string importPath = Path.Combine(path, StartPath);
             Error = $"Invalid Path! Fail to find {Path.GetFileName(StartPath)}";
             return File.Exists(importPath);
-        }
-
-        private async void SendEnterPreventFreeze(Process p)
-        {
-            try
-            {
-                await Task.Delay(300000);
-
-                // Send enter 3 times per 3 seconds
-                for (int i = 0; i < 3; i++)
-                {
-                    await Task.Delay(3000);
-
-                    if (p == null || p.HasExited) { break; }
-                    p.StandardInput.WriteLine(string.Empty);
-                }
-
-                // Wait 5 minutes
-                await Task.Delay(300000);
-
-                // Send enter 3 times per 3 seconds
-                for (int i = 0; i < 3; i++)
-                {
-                    await Task.Delay(3000);
-
-                    if (p == null || p.HasExited) { break; }
-                    p.StandardInput.WriteLine(string.Empty);
-                }
-            }
-            catch
-            {
-
-            }
         }
 
         private async Task DownloadCurrentJre()
