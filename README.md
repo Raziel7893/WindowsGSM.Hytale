@@ -33,11 +33,17 @@
 - Creating the zip yourself
   - Go to following location in your explorer: %appdata%\Hytale\install\release\package\game\latest
   - Zip the "Server"-folder and Assets.zip into a Hytale.zip
+- If you actually have a license => Click Browse => serverfiles and go to the install folder and run the downloader.exe manually once to register the oauth token so windowsgsm is able to update it automatically  
 
 ### ToDo
 - adjust to steam when released
 
 ### Troubleshooting
+- Update or Install fails unexpectedly after a few minutes:
+  - try update manually, the downloader is kinda buggy at the time:
+    - click browse -> serverfiles and replace the server folder and assets.zip with the ones from your game install. 
+    - should be located here: %appdata%\Hytale\install\release\package\game\latest
+  - if the install fails: you could try the oauth method 
 - If other players( or you yourself from another PC in your network) create a inbound Rule in your Windows Firewall.
   - Unlike most other plugins, WindowsGSM can't create the necessary firewall rule for java based servers
   - Else: make sure to forward the ServerPort with Protocoll UDP and TCP.
