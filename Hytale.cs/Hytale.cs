@@ -447,9 +447,14 @@ namespace WindowsGSM.Plugins
                     string filename = urlSegments[urlSegments.Length - 1];
                     string serverAPIFileName = filename;
                 }
-                else
+                else if (string.IsNullOrWhiteSpace(currentAPIVersion))
                 {
                     downloadUrl = FallbackJreUrl; //no windowsbinary yet for latest, use the newest available at plugin dev time.
+                    version = "jdk-25.0.1+8";
+                }
+                else
+                {
+                    return; //we already have JRE, do nothing
                 }
 
                 await webClient.DownloadFileTaskAsync(new Uri(downloadUrl), jreZipPath);
