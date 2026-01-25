@@ -54,7 +54,8 @@ namespace WindowsGSM.Plugins
         //Hytale specifics
         public const string DownloaderUrl = "https://downloader.hytale.com/hytale-downloader.zip";
         public const string JreApiUrl = "https://api.github.com/repos/adoptium/temurin25-binaries/releases/latest";
-        //        public const string JreUrl = "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.1%2B8/OpenJDK25U-jre_x64_windows_hotspot_25.0.1_8.zip";
+
+        public const string FallbackJreUrl = "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.1%2B8/OpenJDK25U-jre_x64_windows_hotspot_25.0.1_8.zip";
         public const string JreRootPath = "JRE25";
         public const string InstallerFolder = "installer";
 
@@ -97,20 +98,23 @@ namespace WindowsGSM.Plugins
                 if (File.Exists(hytaleZipPath))
                 {
                     Notice = "Performing clean extraction of Hytale.zip... This may take a moment.";
-                    
+
                     string serverRoot = ServerPath.GetServersServerFiles(serverData.ServerID);
                     string assetsFile = Path.Combine(serverRoot, "Assets.zip");
                     string serverDir = Path.Combine(serverRoot, "Server");
 
-                    try {
+                    try
+                    {
                         if (File.Exists(assetsFile)) { File.Delete(assetsFile); }
                         if (Directory.Exists(serverDir)) { DeleteFolder(serverDir); }
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         Notice = $"Warning: Could not perform clean cleanup: {e.Message}. Proceeding with merge extraction.";
                     }
 
                     await FileManagement.ExtractZip(hytaleZipPath, serverRoot);
-                    
+
                     // Update timestamp only if extraction seemingly worked
                     if (File.Exists(shipExePath))
                     {
@@ -267,7 +271,7 @@ namespace WindowsGSM.Plugins
             {
                 currentVersion = File.ReadAllText(versionPath);
             }
-            
+
             string remoteVersion = await GetRemoteBuild();
 
             // If we are already up to date, only proceed if jar is missing or user clicked Validate
@@ -281,7 +285,7 @@ namespace WindowsGSM.Plugins
 
             var downloaderProcess = StartProcess(hytaleInstallerPath, $" -download-path \"{hytaleZipPath}\" -skip-update-check -credentials-path \"{hytaleInstallerCredentials}\"");
             downloaderProcess.StandardInput.Close(); // Close input if not authenticated/no input needed
-            
+
             // Update version file only AFTER the process has finished
             downloaderProcess.Exited += (sender, e) => {
                 File.WriteAllText(versionPath, remoteVersion);
@@ -332,7 +336,7 @@ namespace WindowsGSM.Plugins
             {
                 Error = $"Could Not Execute {exe}";
             }
-            
+
             return p;
         }
 
@@ -381,7 +385,7 @@ namespace WindowsGSM.Plugins
             {
                 remoteVersion = await outputTask;
             }
-            
+
             version.WaitForExit(5000);
             Notice = $"got remote version of {remoteVersion}";
             return remoteVersion;
@@ -436,13 +440,16 @@ namespace WindowsGSM.Plugins
 
                 var winBinary = assets.Where(a => a["name"].ToString().Contains("OpenJDK25U-jre_x64_windows_hotspot_") && a["name"].ToString().EndsWith(".zip")).ToList();
                 string downloadUrl = "";
-
                 if (winBinary.Any())
                 {
                     downloadUrl = (winBinary.First()["browser_download_url"].ToString()).Trim();
                     string[] urlSegments = downloadUrl.Split('/');
                     string filename = urlSegments[urlSegments.Length - 1];
                     string serverAPIFileName = filename;
+                }
+                else
+                {
+                    downloadUrl = FallbackJreUrl; //no windowsbinary yet for latest, use the newest available at plugin dev time.
                 }
 
                 await webClient.DownloadFileTaskAsync(new Uri(downloadUrl), jreZipPath);
