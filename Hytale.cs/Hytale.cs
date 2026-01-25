@@ -20,7 +20,7 @@ namespace WindowsGSM.Plugins
             name = "WindowsGSM.Hytale", // WindowsGSM.XXXX
             author = "raziel7893",
             description = "WindowsGSM plugin for supporting Hytale Dedicated Server",
-            version = "1.1.0",
+            version = "1.1.1",
             url = "https://github.com/Raziel7893/WindowsGSM.Hytale", // Github repository link (Best practice) TODO
             color = "#34FFeb" // Color Hex
         };
